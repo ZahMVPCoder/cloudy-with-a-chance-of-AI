@@ -5,24 +5,58 @@ import SearchBar from '../components/SearchBar'
 import WeatherCard from '../components/WeatherCard'
 import ForecastGrid from '../components/ForecastGrid'
 
+/**
+ * Homepage Component
+ * 
+ * CONCEPT: Create Components - Main page component that orchestrates the weather app functionality.
+ * This component demonstrates several key React concepts working together.
+ * 
+ * CONCEPT: Hooks - Uses multiple React hooks (useState, useEffect) to manage state and side effects.
+ * 
+ * CONCEPT: useState - Manages multiple pieces of state for weather data, loading states, and error handling.
+ * State allows the component to be interactive and respond to user actions and data changes.
+ * 
+ * CONCEPT: useEffect - Performs side effects like API calls after component renders.
+ * Used here to auto-detect user's location and fetch weather data on component mount.
+ * 
+ * CONCEPT: API Calls - Demonstrates fetching data from external weather API with proper error handling.
+ * 
+ * CONCEPT: Passing Props - Passes state and functions down to child components (SearchBar, WeatherCard, ForecastGrid).
+ * This enables component composition and keeps data flowing downward in the component tree.
+ * 
+ * CONCEPT: Lifting State - All weather-related state lives in this parent component and is shared
+ * between child components through props. This ensures data consistency across the app.
+ */
 export default function Homepage() {
-  const [currentWeather, setCurrentWeather] = useState(null)
-  const [forecast, setForecast] = useState([])
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  // CONCEPT: useState - Managing multiple pieces of state for different aspects of the weather app
+  // Each useState call returns [currentValue, setterFunction] array that we destructure
+  const [currentWeather, setCurrentWeather] = useState(null) // Stores current weather data object
+  const [forecast, setForecast] = useState([]) // Stores array of forecast days
+  const [error, setError] = useState('') // Stores error messages for user feedback
+  const [loading, setLoading] = useState(false) // Tracks loading state for better UX
 
+  // Environment variable access for API key - keeps sensitive data secure
   const API_KEY = import.meta.env.VITE_WEATHER_API_KEY
 
+  /**
+   * CONCEPT: API Calls - Async function that fetches weather data from external API
+   * Demonstrates proper error handling, loading states, and data transformation
+   * 
+   * @param {string} city - City name or 'auto:ip' for location detection
+   */
   async function fetchWeather(city) {
     try {
+      // Reset error state and set loading to true
       setError('')
       setLoading(true)
 
+      // CONCEPT: API Calls - Using fetch() to make HTTP request to weather API
       const res = await fetch(
         `https://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${city}&days=5`
       )
       const data = await res.json()
 
+      // Handle API-specific errors (city not found, etc.)
       if (data.error) {
         setError('City not found')
         setCurrentWeather(null)
@@ -30,7 +64,8 @@ export default function Homepage() {
         return
       }
 
-      // ✅ Add https: to the icon URL
+      // CONCEPT: useState - Updating state with transformed API data
+      // ✅ Add https: to the icon URL for proper image loading
       setCurrentWeather({
         location: `${data.location.name}, ${data.location.region}`,
         temp: data.current.temp_f,
@@ -42,6 +77,7 @@ export default function Homepage() {
         icon: `https:${data.current.condition.icon}` // fixed here
       })
 
+      // Transform forecast data into the format our components expect
       setForecast(
         data.forecast.forecastday.map((day) => ({
           day: new Date(day.date).toLocaleDateString('en-US', {
@@ -56,14 +92,17 @@ export default function Homepage() {
       console.error(err)
       setError('Failed to fetch weather data.')
     } finally {
+      // Always set loading to false, whether success or error
       setLoading(false)
     }
   }
 
-  // 🧠 Auto-detect location by IP on load
+  // CONCEPT: useEffect - Perform side effect (API call) after component mounts
+  // Empty dependency array [] means this runs once on mount, like componentDidMount
+  // 🧠 Auto-detect location by IP on load for better user experience
   useEffect(() => {
     fetchWeather('auto:ip')
-  }, [])
+  }, []) // Empty dependency array = run once on mount
 
   return (
     <div className="homepage-container">
@@ -71,11 +110,21 @@ export default function Homepage() {
         <div className="homepage-logo">⛅ Cloudy with AI</div>
       </header>
 
+      {/* 
+        CONCEPT: Passing Props - Passing the fetchWeather function to SearchBar component
+        This allows the child component to trigger data fetching in the parent
+      */}
       <SearchBar onSearch={fetchWeather} />
 
+      {/* Conditional rendering based on state - shows different UI based on loading/error states */}
       {loading && <p>Loading your local weather...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
+      {/* 
+        CONCEPT: Passing Props - Passing state data down to child components
+        WeatherCard receives current weather data, ForecastGrid receives forecast array
+        This demonstrates how data flows down the component tree through props
+      */}
       <WeatherCard weather={currentWeather} />
       <ForecastGrid forecast={forecast} />
     </div>

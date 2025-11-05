@@ -1,14 +1,39 @@
 import React, { useEffect } from 'react'
 import { motion } from 'framer-motion'
 
+/**
+ * WeatherCard Component
+ * 
+ * CONCEPT: Create Components - A specialized component for displaying detailed current weather information.
+ * This component demonstrates advanced concepts like third-party library integration (Framer Motion).
+ * 
+ * CONCEPT: useEffect - Used here for debugging purposes to log weather prop changes.
+ * This hook runs after every render when the 'weather' dependency changes.
+ * 
+ * CONCEPT: Passing Props - Receives weather data object from parent (Homepage) component.
+ * The component is designed to be reusable with any weather data structure.
+ * 
+ * This component also demonstrates:
+ * - Conditional rendering (early return if no weather data)
+ * - Data transformation and validation (icon URL normalization)
+ * - Error handling (image onError event)
+ * - Animation integration with Framer Motion
+ * 
+ * @param {Object} weather - Weather data object containing location, temp, condition, etc.
+ */
 export default function WeatherCard({ weather }) {
+  // CONCEPT: useEffect - Side effect for debugging/logging when weather prop changes
+  // The dependency array [weather] means this runs whenever the weather prop changes
   useEffect(() => {
     // debug: check what `weather` contains when this component renders
     console.log('WeatherCard weather prop:', weather)
-  }, [weather])
+  }, [weather]) // Re-run when weather prop changes
 
+  // Early return pattern - guard clause to prevent rendering when no data
+  // This prevents errors and unnecessary rendering of empty content
   if (!weather) return null
 
+  // Data transformation and validation logic
   // normalize icon to full https URL or null
   const rawIcon = weather.icon || ''
   const iconUrl =
@@ -25,6 +50,7 @@ export default function WeatherCard({ weather }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
+      {/* CONCEPT: Passing Props - Accessing data from the weather prop object */}
       <h2 className="current-location">{weather.location}</h2>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -32,7 +58,7 @@ export default function WeatherCard({ weather }) {
           {weather.temp}°F
         </div>
 
-        {/* Only render an <img> — do not render the URL as text */}
+        {/* Conditional rendering with proper error handling */}
         {iconUrl ? (
           <motion.img
             key={iconUrl}
@@ -53,6 +79,7 @@ export default function WeatherCard({ weather }) {
 
       <p className="weather-description">{weather.condition}</p>
 
+      {/* Weather details section demonstrating data display and calculations */}
       <div className="weather-details">
         <div className="weather-detail-item">
           <div className="detail-label">Humidity</div>
@@ -63,12 +90,12 @@ export default function WeatherCard({ weather }) {
           <div className="detail-value">{weather.windSpeed} mph</div>
         </div>
         <div className="weather-detail-item">
-  <div className="detail-label">Pressure</div>
-  <div className="detail-value">
-    {(weather.pressure * 0.02953).toFixed(2)} inHg
-  </div>
-</div>
-
+          <div className="detail-label">Pressure</div>
+          <div className="detail-value">
+            {/* Data transformation: converting millibars to inches of mercury */}
+            {(weather.pressure * 0.02953).toFixed(2)} inHg
+          </div>
+        </div>
         <div className="weather-detail-item">
           <div className="detail-label">UV Index</div>
           <div className="detail-value">{weather.uvIndex}</div>
